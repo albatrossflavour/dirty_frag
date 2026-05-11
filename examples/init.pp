@@ -1,8 +1,16 @@
-# Detection only (default) — deploys the config file with no modules blacklisted.
-# The dirty_frag fact still reports loaded/blacklisted/available state for each module.
-include dirty_frag
+# The dirty_frag fact is available on every Linux node with no class inclusion
+# required. It reports per-module state plus two summary keys:
+#
+#   $facts['dirty_frag']['vulnerable']      — true if any module is loaded
+#   $facts['dirty_frag']['reboot_required'] — true if a module is blacklisted but still loaded
+#
+# Use the fact directly in profiles, roles, or PuppetDB queries without
+# including the class.
 
-# Selectively blacklist a single module (e.g. esp4 only).
+# Only include the class when you need Puppet to *persistently blacklist*
+# modules via /etc/modprobe.d/dirtyfrag.conf.
+
+# Blacklist a single module.
 class { 'dirty_frag':
   mitigate_esp4 => true,
 }
