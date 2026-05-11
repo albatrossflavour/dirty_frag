@@ -14,7 +14,7 @@ This module ships three complementary tools:
 
 1. **A structured fact** (`dirty_frag`) that reports vulnerability status, per-module state, and whether a reboot is needed. No code changes required, just deploy the module.
 2. **A Puppet class** (`dirty_frag`) that persistently blocks modules via `install /bin/false` directives in `/etc/modprobe.d/dirtyfrag.conf`. Only needed when you want Puppet to enforce the block.
-3. **A Bolt task** (`dirty_frag::unload`) that immediately unloads a module from a running kernel.
+3. **A task** (`dirty_frag::unload`) that immediately unloads a module from a running kernel.
 
 The fact is the primary tool. Deploy the module and you get fleet-wide visibility without touching a manifest.
 
@@ -172,12 +172,12 @@ class { 'dirty_frag':
 
 A `blacklist` directive only prevents autoloading. It does not block explicit `modprobe` calls. The `install ... /bin/false` approach ensures the module cannot be loaded by any mechanism, which is why this module uses it.
 
-## The unload Bolt task
+## The unload task
 
 The `dirty_frag::unload` task unloads a vulnerable module from the running kernel immediately, without waiting for a reboot.
 
 ```shell
-bolt task run dirty_frag::unload module=esp4 --targets servers
+puppet task run dirty_frag::unload module=esp4 --nodes servers
 ```
 
 The `module` parameter accepts one of: `esp4`, `esp6`, or `rxrpc`.
@@ -198,14 +198,14 @@ The task returns an error if the module is not currently loaded, is in use by an
 
 - **Fact only (no class):** reads `/proc/modules`, scans `/etc/modprobe.d/` files, and runs `modinfo`. No files are written.
 - **Class included:** creates and manages `/etc/modprobe.d/dirtyfrag.conf` (owned by `root:root`, mode `0644`). The file is present whenever the class is included, even if all parameters are `false`.
-- **Bolt task:** runs `modprobe -r` to unload a single module from the running kernel.
+- **Task:** runs `modprobe -r` to unload a single module from the running kernel.
 
 ## Limitations
 
 - **Linux only.** The fact is confined to nodes where `kernel == 'Linux'`. The class and task assume Linux kernel module tooling.
-- **Blocking does not unload live modules.** The class writes `modprobe.d` configuration that takes effect on next boot or next `modprobe` call. Use the Bolt task or a reboot to remove already-loaded modules.
+- **Blocking does not unload live modules.** The class writes `modprobe.d` configuration that takes effect on next boot or next `modprobe` call. Use the task or a reboot to remove already-loaded modules.
 - **No kernel version detection.** The module reports and manages module state regardless of kernel version. If you need kernel-version-aware logic, handle that in your classification or Hiera hierarchy.
-- **Module in use.** The Bolt task cannot unload a module that is in use by another kernel subsystem. Apply the block and reboot in that case.
+- **Module in use.** The task cannot unload a module that is in use by another kernel subsystem. Apply the block and reboot in that case.
 
 ## Reference
 

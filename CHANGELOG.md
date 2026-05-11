@@ -4,6 +4,13 @@ All notable changes to this project will be documented in this file.
 
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/).
 
+## [1.0.1] - 2026-05-11
+
+### Fixed
+
+- Use `puppet task run` syntax instead of `bolt task run` in README examples
+- Normalise task references to "task" throughout documentation
+
 ## [1.0.0] - 2026-05-11
 
 ### Added
