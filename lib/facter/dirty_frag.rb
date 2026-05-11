@@ -14,9 +14,12 @@ Facter.add('dirty_frag') do
     end
 
     result = {}
+    any_loaded = false
+    any_reboot_required = false
 
     modules.each do |mod|
       loaded = loaded_modules.include?(mod)
+      any_loaded = true if loaded
 
       blacklisted = false
       modprobe_dir = '/etc/modprobe.d'
@@ -38,6 +41,8 @@ Facter.add('dirty_frag') do
         end
       end
 
+      any_reboot_required = true if blacklisted && loaded
+
       modinfo_result = Facter::Core::Execution.execute("modinfo #{mod}", on_fail: :failed)
       available = modinfo_result != :failed
 
@@ -47,6 +52,9 @@ Facter.add('dirty_frag') do
         'available'   => available,
       }
     end
+
+    result['vulnerable'] = any_loaded
+    result['reboot_required'] = any_reboot_required
 
     result
   end

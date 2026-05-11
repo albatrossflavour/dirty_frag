@@ -57,6 +57,11 @@ describe 'dirty_frag' do
       expect(result['esp6']['loaded']).to be true
       expect(result['rxrpc']['loaded']).to be true
     end
+
+    it 'reports vulnerable as true' do
+      result = Facter.value('dirty_frag')
+      expect(result['vulnerable']).to be true
+    end
   end
 
   context 'when no modules are loaded' do
@@ -73,6 +78,16 @@ describe 'dirty_frag' do
       expect(result['esp6']['loaded']).to be false
       expect(result['rxrpc']['loaded']).to be false
     end
+
+    it 'reports vulnerable as false' do
+      result = Facter.value('dirty_frag')
+      expect(result['vulnerable']).to be false
+    end
+
+    it 'reports reboot_required as false' do
+      result = Facter.value('dirty_frag')
+      expect(result['reboot_required']).to be false
+    end
   end
 
   context 'when only esp4 is loaded (mixed state)' do
@@ -88,6 +103,40 @@ describe 'dirty_frag' do
       expect(result['esp4']['loaded']).to be true
       expect(result['esp6']['loaded']).to be false
       expect(result['rxrpc']['loaded']).to be false
+    end
+
+    it 'reports vulnerable as true when any module is loaded' do
+      result = Facter.value('dirty_frag')
+      expect(result['vulnerable']).to be true
+    end
+  end
+
+  context 'when a module is blacklisted and still loaded (reboot required)' do
+    before(:each) do
+      allow(File).to receive(:read).with('/proc/modules').and_return(proc_modules_all_loaded)
+      allow(Dir).to receive(:glob).with('/etc/modprobe.d/*').and_return(['/etc/modprobe.d/blacklist.conf'])
+      allow(File).to receive(:file?).with('/etc/modprobe.d/blacklist.conf').and_return(true)
+      allow(File).to receive(:readlines).with('/etc/modprobe.d/blacklist.conf')
+                                        .and_return(["install esp4 /bin/false\n"])
+      allow(Facter::Core::Execution).to receive(:execute)
+        .with(anything, on_fail: :failed)
+        .and_return('filename: /lib/modules/test')
+    end
+
+    it 'reports reboot_required as true' do
+      result = Facter.value('dirty_frag')
+      expect(result['reboot_required']).to be true
+    end
+
+    it 'reports vulnerable as true' do
+      result = Facter.value('dirty_frag')
+      expect(result['vulnerable']).to be true
+    end
+
+    it 'reports the module as both blacklisted and loaded' do
+      result = Facter.value('dirty_frag')
+      expect(result['esp4']['blacklisted']).to be true
+      expect(result['esp4']['loaded']).to be true
     end
   end
 
@@ -106,6 +155,11 @@ describe 'dirty_frag' do
     it 'reports the module as blacklisted' do
       result = Facter.value('dirty_frag')
       expect(result['esp4']['blacklisted']).to be true
+    end
+
+    it 'reports reboot_required as false when blacklisted but not loaded' do
+      result = Facter.value('dirty_frag')
+      expect(result['reboot_required']).to be false
     end
   end
 
