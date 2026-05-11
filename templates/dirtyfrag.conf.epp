@@ -1,0 +1,11 @@
+<%- | Boolean $mitigate_esp4, Boolean $mitigate_esp6, Boolean $mitigate_rxrpc | -%>
+# Managed by Puppet - dirty_frag module
+<% if $mitigate_esp4 { -%>
+install esp4 /bin/false
+<% } -%>
+<% if $mitigate_esp6 { -%>
+install esp6 /bin/false
+<% } -%>
+<% if $mitigate_rxrpc { -%>
+install rxrpc /bin/false
+<% } -%>

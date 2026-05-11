@@ -1,1 +1,4 @@
---- {}
+---
+dirty_frag::mitigate_esp4: false
+dirty_frag::mitigate_esp6: false
+dirty_frag::mitigate_rxrpc: false
