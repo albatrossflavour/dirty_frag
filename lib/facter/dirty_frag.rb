@@ -4,7 +4,7 @@ Facter.add('dirty_frag') do
   confine kernel: 'Linux'
 
   setcode do
-    modules = %w[esp4 esp6 rxrpc]
+    modules = ['esp4', 'esp6', 'rxrpc']
 
     begin
       proc_modules_content = File.read('/proc/modules')
@@ -26,7 +26,7 @@ Facter.add('dirty_frag') do
             next unless File.file?(conf_file)
 
             File.readlines(conf_file).each do |line|
-              if line.match?(/^\s*install\s+#{Regexp.escape(mod)}\s+\/bin\/(true|false)/)
+              if line.match?(%r{^\s*install\s+#{Regexp.escape(mod)}\s+/bin/(true|false)})
                 blacklisted = true
                 break
               end
