@@ -1,0 +1,10 @@
+{
+  "description": "Unload a specified vulnerable kernel module (esp4, esp6, or rxrpc)",
+  "input_method": "environment",
+  "parameters": {
+    "module": {
+      "description": "The kernel module to unload",
+      "type": "Enum['esp4', 'esp6', 'rxrpc']"
+    }
+  }
+}
