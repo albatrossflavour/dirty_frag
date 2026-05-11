@@ -111,7 +111,7 @@ describe 'dirty_frag' do
     end
   end
 
-  context 'when a module is blacklisted and still loaded (reboot required)' do
+  context 'when a module is blocked and still loaded (reboot required)' do
     before(:each) do
       allow(File).to receive(:read).with('/proc/modules').and_return(proc_modules_all_loaded)
       allow(Dir).to receive(:glob).with('/etc/modprobe.d/*').and_return(['/etc/modprobe.d/blacklist.conf'])
@@ -133,14 +133,14 @@ describe 'dirty_frag' do
       expect(result['vulnerable']).to be true
     end
 
-    it 'reports the module as both blacklisted and loaded' do
+    it 'reports the module as both blocked and loaded' do
       result = Facter.value('dirty_frag')
-      expect(result['esp4']['blacklisted']).to be true
+      expect(result['esp4']['blocked']).to be true
       expect(result['esp4']['loaded']).to be true
     end
   end
 
-  context 'when a module is blacklisted with /bin/false' do
+  context 'when a module is blocked with /bin/false' do
     before(:each) do
       allow(File).to receive(:read).with('/proc/modules').and_return(proc_modules_none_loaded)
       allow(Dir).to receive(:glob).with('/etc/modprobe.d/*').and_return(['/etc/modprobe.d/blacklist.conf'])
@@ -152,18 +152,18 @@ describe 'dirty_frag' do
         .and_return('filename: /lib/modules/test')
     end
 
-    it 'reports the module as blacklisted' do
+    it 'reports the module as blocked' do
       result = Facter.value('dirty_frag')
-      expect(result['esp4']['blacklisted']).to be true
+      expect(result['esp4']['blocked']).to be true
     end
 
-    it 'reports reboot_required as false when blacklisted but not loaded' do
+    it 'reports reboot_required as false when blocked but not loaded' do
       result = Facter.value('dirty_frag')
       expect(result['reboot_required']).to be false
     end
   end
 
-  context 'when a module is blacklisted with /bin/true' do
+  context 'when a module is blocked with /bin/true' do
     before(:each) do
       allow(File).to receive(:read).with('/proc/modules').and_return(proc_modules_none_loaded)
       allow(Dir).to receive(:glob).with('/etc/modprobe.d/*').and_return(['/etc/modprobe.d/nomod.conf'])
@@ -175,13 +175,13 @@ describe 'dirty_frag' do
         .and_return('filename: /lib/modules/test')
     end
 
-    it 'reports the module as blacklisted' do
+    it 'reports the module as blocked' do
       result = Facter.value('dirty_frag')
-      expect(result['esp6']['blacklisted']).to be true
+      expect(result['esp6']['blocked']).to be true
     end
   end
 
-  context 'when no blacklist directives are present' do
+  context 'when no install directives are present' do
     before(:each) do
       allow(File).to receive(:read).with('/proc/modules').and_return(proc_modules_none_loaded)
       allow(Dir).to receive(:glob).with('/etc/modprobe.d/*').and_return(['/etc/modprobe.d/other.conf'])
@@ -193,11 +193,11 @@ describe 'dirty_frag' do
         .and_return('filename: /lib/modules/test')
     end
 
-    it 'reports all modules as not blacklisted' do
+    it 'reports all modules as not blocked' do
       result = Facter.value('dirty_frag')
-      expect(result['esp4']['blacklisted']).to be false
-      expect(result['esp6']['blacklisted']).to be false
-      expect(result['rxrpc']['blacklisted']).to be false
+      expect(result['esp4']['blocked']).to be false
+      expect(result['esp6']['blocked']).to be false
+      expect(result['rxrpc']['blocked']).to be false
     end
   end
 
@@ -279,7 +279,7 @@ describe 'dirty_frag' do
     end
   end
 
-  context 'when blacklist directive is in a custom conf file' do
+  context 'when install directive is in a custom conf file' do
     before(:each) do
       allow(File).to receive(:read).with('/proc/modules').and_return(proc_modules_none_loaded)
       allow(Dir).to receive(:glob).with('/etc/modprobe.d/*')
@@ -287,7 +287,7 @@ describe 'dirty_frag' do
       allow(File).to receive(:file?).with('/etc/modprobe.d/custom.conf').and_return(true)
       allow(File).to receive(:file?).with('/etc/modprobe.d/another.conf').and_return(true)
       allow(File).to receive(:readlines).with('/etc/modprobe.d/custom.conf')
-                                        .and_return(["# custom blacklist\n", "install rxrpc /bin/false\n"])
+                                        .and_return(["# module blocked\n", "install rxrpc /bin/false\n"])
       allow(File).to receive(:readlines).with('/etc/modprobe.d/another.conf')
                                         .and_return(["# nothing relevant\n"])
       allow(Facter::Core::Execution).to receive(:execute)
@@ -295,10 +295,10 @@ describe 'dirty_frag' do
         .and_return('filename: /lib/modules/test')
     end
 
-    it 'detects blacklist in non-standard config files' do
+    it 'detects install directive in non-standard config files' do
       result = Facter.value('dirty_frag')
-      expect(result['rxrpc']['blacklisted']).to be true
-      expect(result['esp4']['blacklisted']).to be false
+      expect(result['rxrpc']['blocked']).to be true
+      expect(result['esp4']['blocked']).to be false
     end
   end
 
@@ -311,11 +311,11 @@ describe 'dirty_frag' do
         .and_return('filename: /lib/modules/test')
     end
 
-    it 'reports all modules as not blacklisted' do
+    it 'reports all modules as not blocked' do
       result = Facter.value('dirty_frag')
-      expect(result['esp4']['blacklisted']).to be false
-      expect(result['esp6']['blacklisted']).to be false
-      expect(result['rxrpc']['blacklisted']).to be false
+      expect(result['esp4']['blocked']).to be false
+      expect(result['esp6']['blocked']).to be false
+      expect(result['rxrpc']['blocked']).to be false
     end
   end
 
@@ -335,7 +335,7 @@ describe 'dirty_frag' do
     end
   end
 
-  context 'when blacklist directive has leading whitespace' do
+  context 'when install directive has leading whitespace' do
     before(:each) do
       allow(File).to receive(:read).with('/proc/modules').and_return(proc_modules_none_loaded)
       allow(Dir).to receive(:glob).with('/etc/modprobe.d/*').and_return(['/etc/modprobe.d/ws.conf'])
@@ -347,9 +347,9 @@ describe 'dirty_frag' do
         .and_return('filename: /lib/modules/test')
     end
 
-    it 'detects blacklist with leading whitespace' do
+    it 'detects install directive with leading whitespace' do
       result = Facter.value('dirty_frag')
-      expect(result['esp4']['blacklisted']).to be true
+      expect(result['esp4']['blocked']).to be true
     end
   end
 end

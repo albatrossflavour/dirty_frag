@@ -30,7 +30,7 @@ The following parameters are available in the `dirty_frag` class:
 
 Data type: `Boolean`
 
-Blacklist the esp4 kernel module via modprobe.d
+Block the esp4 kernel module via install /bin/false in modprobe.d
 
 Default value: `false`
 
@@ -38,7 +38,7 @@ Default value: `false`
 
 Data type: `Boolean`
 
-Blacklist the esp6 kernel module via modprobe.d
+Block the esp6 kernel module via install /bin/false in modprobe.d
 
 Default value: `false`
 
@@ -46,7 +46,7 @@ Default value: `false`
 
 Data type: `Boolean`
 
-Blacklist the rxrpc kernel module via modprobe.d
+Block the rxrpc kernel module via install /bin/false in modprobe.d
 
 Default value: `false`
 

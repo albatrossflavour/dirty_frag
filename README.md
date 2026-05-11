@@ -13,7 +13,7 @@ The primary mitigation is to prevent these modules from loading. The `install <m
 This module ships three complementary tools:
 
 1. **A structured fact** (`dirty_frag`) that reports vulnerability status, per-module state, and whether a reboot is needed. No code changes required, just deploy the module.
-2. **A Puppet class** (`dirty_frag`) that persistently blacklists modules via `/etc/modprobe.d/dirtyfrag.conf`. Only needed when you want Puppet to enforce the blacklist.
+2. **A Puppet class** (`dirty_frag`) that persistently blocks modules via `install /bin/false` directives in `/etc/modprobe.d/dirtyfrag.conf`. Only needed when you want Puppet to enforce the block.
 3. **A Bolt task** (`dirty_frag::unload`) that immediately unloads a module from a running kernel.
 
 The fact is the primary tool. Deploy the module and you get fleet-wide visibility without touching a manifest.
@@ -46,17 +46,17 @@ The fact returns a hash with per-module detail and two summary keys:
 {
   "esp4": {
     "loaded": true,
-    "blacklisted": true,
+    "blocked": true,
     "available": true
   },
   "esp6": {
     "loaded": false,
-    "blacklisted": false,
+    "blocked": false,
     "available": true
   },
   "rxrpc": {
     "loaded": false,
-    "blacklisted": false,
+    "blocked": false,
     "available": true
   },
   "vulnerable": true,
@@ -71,7 +71,7 @@ Each of `esp4`, `esp6`, and `rxrpc` reports:
 | Key | Type | Meaning |
 |---|---|---|
 | `loaded` | Boolean | Module is currently in the running kernel (present in `/proc/modules`) |
-| `blacklisted` | Boolean | An `install <module> /bin/false` directive exists in `/etc/modprobe.d/` |
+| `blocked` | Boolean | An `install <module> /bin/false` directive exists in `/etc/modprobe.d/` |
 | `available` | Boolean | Module binary exists on the system (`modinfo` can find it) |
 
 #### Summary keys
@@ -79,7 +79,7 @@ Each of `esp4`, `esp6`, and `rxrpc` reports:
 | Key | Type | Meaning |
 |---|---|---|
 | `vulnerable` | Boolean | `true` if **any** of the three modules is currently loaded |
-| `reboot_required` | Boolean | `true` if any module is both blacklisted **and** still loaded (the blacklist will not take effect until reboot) |
+| `reboot_required` | Boolean | `true` if any module is both blocked **and** still loaded (the block will not take effect until reboot) |
 
 ### Querying the fact
 
@@ -103,7 +103,7 @@ if $facts['dirty_frag']['vulnerable'] {
 
 if $facts['dirty_frag']['reboot_required'] {
   notify { 'dirty_frag_reboot':
-    message  => 'Reboot required to complete dirty frag mitigation',
+    message  => 'Reboot required to unload blocked dirty frag modules',
     loglevel => warning,
   }
 }
@@ -123,25 +123,25 @@ Find nodes that need a reboot to complete mitigation:
 puppet query 'facts[certname, value] { name = "dirty_frag" and value.reboot_required = true }'
 ```
 
-Find nodes where `esp4` is loaded but not yet blacklisted:
+Find nodes where `esp4` is loaded but not yet blocked:
 
 ```shell
-puppet query 'facts[certname, value] { name = "dirty_frag" and value.esp4.loaded = true and value.esp4.blacklisted = false }'
+puppet query 'facts[certname, value] { name = "dirty_frag" and value.esp4.loaded = true and value.esp4.blocked = false }'
 ```
 
 ## The dirty_frag class (optional)
 
 The class writes `/etc/modprobe.d/dirtyfrag.conf` with `install <module> /bin/false` directives for each enabled parameter. This persistently prevents modules from loading on boot or via explicit `modprobe` calls.
 
-Only include this class when you need Puppet to enforce the blacklist. The fact works independently.
+Only include this class when you need Puppet to enforce the block. The fact works independently.
 
 ### Parameters
 
 | Parameter | Type | Default | Description |
 |---|---|---|---|
-| `mitigate_esp4` | `Boolean` | `false` | Blacklist the `esp4` kernel module |
-| `mitigate_esp6` | `Boolean` | `false` | Blacklist the `esp6` kernel module |
-| `mitigate_rxrpc` | `Boolean` | `false` | Blacklist the `rxrpc` kernel module |
+| `mitigate_esp4` | `Boolean` | `false` | Block the `esp4` kernel module via `install /bin/false` |
+| `mitigate_esp6` | `Boolean` | `false` | Block the `esp6` kernel module via `install /bin/false` |
+| `mitigate_rxrpc` | `Boolean` | `false` | Block the `rxrpc` kernel module via `install /bin/false` |
 
 ### Usage with Hiera
 
@@ -167,9 +167,9 @@ class { 'dirty_frag':
 }
 ```
 
-### Why install /bin/false instead of blacklist?
+### Why install /bin/false instead of a blacklist directive?
 
-The `blacklist` directive only prevents autoloading. It does not block explicit `modprobe` calls. The `install ... /bin/false` approach ensures the module cannot be loaded by any mechanism.
+A `blacklist` directive only prevents autoloading. It does not block explicit `modprobe` calls. The `install ... /bin/false` approach ensures the module cannot be loaded by any mechanism, which is why this module uses it.
 
 ## The unload Bolt task
 
@@ -191,7 +191,7 @@ On success:
 }
 ```
 
-The task returns an error if the module is not currently loaded, is in use by another kernel subsystem, or is not in the allow-list. If a module is in use and cannot be unloaded, apply the blacklist and reboot.
+The task returns an error if the module is not currently loaded, is in use by another kernel subsystem, or is not in the allow-list. If a module is in use and cannot be unloaded, apply the block and reboot.
 
 ## What this module affects
 
@@ -202,9 +202,9 @@ The task returns an error if the module is not currently loaded, is in use by an
 ## Limitations
 
 - **Linux only.** The fact is confined to nodes where `kernel == 'Linux'`. The class and task assume Linux kernel module tooling.
-- **Blacklisting does not unload live modules.** The class writes `modprobe.d` configuration that takes effect on next boot or next `modprobe` call. Use the Bolt task or a reboot to remove already-loaded modules.
+- **Blocking does not unload live modules.** The class writes `modprobe.d` configuration that takes effect on next boot or next `modprobe` call. Use the Bolt task or a reboot to remove already-loaded modules.
 - **No kernel version detection.** The module reports and manages module state regardless of kernel version. If you need kernel-version-aware logic, handle that in your classification or Hiera hierarchy.
-- **Module in use.** The Bolt task cannot unload a module that is in use by another kernel subsystem. Apply the blacklist and reboot in that case.
+- **Module in use.** The Bolt task cannot unload a module that is in use by another kernel subsystem. Apply the block and reboot in that case.
 
 ## Reference
 

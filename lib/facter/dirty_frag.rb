@@ -21,7 +21,7 @@ Facter.add('dirty_frag') do
       loaded = loaded_modules.include?(mod)
       any_loaded = true if loaded
 
-      blacklisted = false
+      blocked = false
       modprobe_dir = '/etc/modprobe.d'
       if File.directory?(modprobe_dir)
         begin
@@ -30,26 +30,26 @@ Facter.add('dirty_frag') do
 
             File.readlines(conf_file).each do |line|
               if line.match?(%r{^\s*install\s+#{Regexp.escape(mod)}\s+/bin/(true|false)})
-                blacklisted = true
+                blocked = true
                 break
               end
             end
-            break if blacklisted
+            break if blocked
           end
         rescue StandardError
-          # If we cannot read modprobe.d files, treat as not blacklisted
+          # If we cannot read modprobe.d files, treat as not blocked
         end
       end
 
-      any_reboot_required = true if blacklisted && loaded
+      any_reboot_required = true if blocked && loaded
 
       modinfo_result = Facter::Core::Execution.execute("modinfo #{mod}", on_fail: :failed)
       available = modinfo_result != :failed
 
       result[mod] = {
-        'loaded'      => loaded,
-        'blacklisted' => blacklisted,
-        'available'   => available,
+        'loaded'   => loaded,
+        'blocked'  => blocked,
+        'available' => available,
       }
     end
 

@@ -36,7 +36,7 @@ describe 'dirty_frag class' do
       idempotent_apply(manifest)
     end
 
-    it 'creates config containing esp4 blacklist' do
+    it 'creates config containing esp4 install block' do
       result = run_shell('cat /etc/modprobe.d/dirtyfrag.conf')
       expect(result.stdout).to match(%r{^install esp4 /bin/false$})
     end
@@ -102,7 +102,7 @@ describe 'dirty_frag class' do
       ['esp4', 'esp6', 'rxrpc'].each do |mod|
         expect(fact_data['dirty_frag']).to have_key(mod)
         expect(fact_data['dirty_frag'][mod]).to have_key('loaded')
-        expect(fact_data['dirty_frag'][mod]).to have_key('blacklisted')
+        expect(fact_data['dirty_frag'][mod]).to have_key('blocked')
         expect(fact_data['dirty_frag'][mod]).to have_key('available')
       end
     end

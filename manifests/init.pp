@@ -1,11 +1,11 @@
 # @summary Detect and mitigate the dirty frag kernel vulnerability
 #
 # @param mitigate_esp4
-#   Blacklist the esp4 kernel module via modprobe.d
+#   Block the esp4 kernel module via install /bin/false in modprobe.d
 # @param mitigate_esp6
-#   Blacklist the esp6 kernel module via modprobe.d
+#   Block the esp6 kernel module via install /bin/false in modprobe.d
 # @param mitigate_rxrpc
-#   Blacklist the rxrpc kernel module via modprobe.d
+#   Block the rxrpc kernel module via install /bin/false in modprobe.d
 class dirty_frag (
   Boolean $mitigate_esp4  = false,
   Boolean $mitigate_esp6  = false,
