@@ -23,7 +23,6 @@ The fact is the primary tool. Deploy the module and you get fleet-wide visibilit
 ### Requirements
 
 - Puppet 7.x or 8.x
-- [puppetlabs-stdlib](https://forge.puppet.com/modules/puppetlabs/stdlib) >= 4.0.0 < 10.0.0
 - Linux operating system
 
 ### Supported operating systems
@@ -69,7 +68,7 @@ The fact returns a hash with per-module detail and two summary keys:
 Each of `esp4`, `esp6`, and `rxrpc` reports:
 
 | Key | Type | Meaning |
-|---|---|---|
+| --- | --- | --- |
 | `loaded` | Boolean | Module is currently in the running kernel (present in `/proc/modules`) |
 | `blocked` | Boolean | An `install <module> /bin/false` directive exists in `/etc/modprobe.d/` |
 | `available` | Boolean | Module binary exists on the system (`modinfo` can find it) |
@@ -77,7 +76,7 @@ Each of `esp4`, `esp6`, and `rxrpc` reports:
 #### Summary keys
 
 | Key | Type | Meaning |
-|---|---|---|
+| --- | --- | --- |
 | `vulnerable` | Boolean | `true` if **any** of the three modules is currently loaded |
 | `reboot_required` | Boolean | `true` if any module is both blocked **and** still loaded (the block will not take effect until reboot) |
 
@@ -131,14 +130,16 @@ puppet query 'facts[certname, value] { name = "dirty_frag" and value.esp4.loaded
 
 ## The dirty_frag class (optional)
 
-The class writes `/etc/modprobe.d/dirtyfrag.conf` with `install <module> /bin/false` directives for each enabled parameter. This persistently prevents modules from loading on boot or via explicit `modprobe` calls.
+The class manages `/etc/modprobe.d/dirtyfrag.conf`. For each parameter set to `true`, it writes an `install <module> /bin/false` directive that persistently prevents that module from loading on boot or via explicit `modprobe` calls.
 
 Only include this class when you need Puppet to enforce the block. The fact works independently.
+
+If you include the class with all parameters left at their defaults (`false`), the config file is still created but contains no `install` directives.
 
 ### Parameters
 
 | Parameter | Type | Default | Description |
-|---|---|---|---|
+| --- | --- | --- | --- |
 | `mitigate_esp4` | `Boolean` | `false` | Block the `esp4` kernel module via `install /bin/false` |
 | `mitigate_esp6` | `Boolean` | `false` | Block the `esp6` kernel module via `install /bin/false` |
 | `mitigate_rxrpc` | `Boolean` | `false` | Block the `rxrpc` kernel module via `install /bin/false` |
@@ -195,9 +196,9 @@ The task returns an error if the module is not currently loaded, is in use by an
 
 ## What this module affects
 
-- The custom fact reads `/proc/modules`, scans `/etc/modprobe.d/` files, and runs `modinfo`
-- The class creates and manages `/etc/modprobe.d/dirtyfrag.conf`
-- The Bolt task runs `modprobe -r` to unload modules from the running kernel
+- **Fact only (no class):** reads `/proc/modules`, scans `/etc/modprobe.d/` files, and runs `modinfo`. No files are written.
+- **Class included:** creates and manages `/etc/modprobe.d/dirtyfrag.conf` (owned by `root:root`, mode `0644`). The file is present whenever the class is included, even if all parameters are `false`.
+- **Bolt task:** runs `modprobe -r` to unload a single module from the running kernel.
 
 ## Limitations
 

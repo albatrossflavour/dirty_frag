@@ -1,18 +1,13 @@
 {
   "name": "albatrossflavour-dirty_frag",
-  "version": "0.1.0",
+  "version": "1.0.0",
   "author": "albatrossflavour",
   "summary": "Detect and mitigate the dirty frag kernel vulnerability (CVE-2026-43284/CVE-2026-43500)",
   "license": "Apache-2.0",
   "source": "https://github.com/albatrossflavour/dirty_frag",
   "project_page": "https://github.com/albatrossflavour/dirty_frag",
   "issues_url": "https://github.com/albatrossflavour/dirty_frag/issues",
-  "dependencies": [
-    {
-      "name": "puppetlabs-stdlib",
-      "version_requirement": ">= 4.0.0 < 10.0.0"
-    }
-  ],
+  "dependencies": [],
   "operatingsystem_support": [
     {
       "operatingsystem": "RedHat",
