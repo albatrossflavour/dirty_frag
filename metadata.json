@@ -1,6 +1,6 @@
 {
   "name": "albatrossflavour-dirty_frag",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "author": "albatrossflavour",
   "summary": "Detect and mitigate the dirty frag kernel vulnerability (CVE-2026-43284/CVE-2026-43500)",
   "license": "Apache-2.0",
@@ -43,6 +43,13 @@
       "operatingsystem": "SLES",
       "operatingsystemrelease": [
         "15"
+      ]
+    },
+    {
+      "operatingsystem": "Amazon",
+      "operatingsystemrelease": [
+        "2",
+        "2023"
       ]
     }
   ],
